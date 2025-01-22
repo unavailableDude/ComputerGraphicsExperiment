@@ -1,0 +1,7 @@
+#runs recursively by defauld, add slash at the beginning to disable it
+#add slash to the end to specify directory
+.vscode/
+.DS_Store
+build/
+#exclude SDL2 include and lib files (in this case they are symbolic links so no slash at the end)
+*/SDL2*
