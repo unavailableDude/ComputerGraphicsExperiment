@@ -2,9 +2,9 @@
 #include "SDL2/SDL.h"
 
 
-class IDrawable{
+class IDisplayable{
 	public:
-	virtual ~IDrawable(){}
+	virtual ~IDisplayable(){}
 	virtual void Display(SDL_Renderer *renderer) = 0;
 	virtual void DisplayFilled(SDL_Renderer *renderer) = 0;
 };

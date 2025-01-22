@@ -20,7 +20,7 @@ uint16_t DESIRED_FPS = 60;  //try UINT16_MAX, it's fun
 //const uint16_t MIN_FPS = 1;
 //#define PROFILING
 
-void DisplayShapes(IDrawable* shape, SDL_Renderer* renderer){
+void DisplayShapes(IDisplayable* shape, SDL_Renderer* renderer){
     shape->Display(renderer);
 }
 

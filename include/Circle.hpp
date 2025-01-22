@@ -1,10 +1,10 @@
 #pragma once
 #include "SDL2/SDL.h"
 #include "Vec2int.hpp"
-#include "IDrawable.hpp"
+#include "IDisplayable.hpp"
 
 
-class Circle : public IDrawable{
+class Circle : public IDisplayable{
     private:
     Vec2int pos;
     int r;
