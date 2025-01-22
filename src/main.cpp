@@ -1,3 +1,9 @@
+/*
+    WARNING! the code you see here may cause you to have eye cancer
+    !YOU HAVE BEEN WARNED!
+*/
+
+
 #include <iostream>
 #include <stdint.h>
 
