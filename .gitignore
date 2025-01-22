@@ -2,6 +2,6 @@
 #add slash to the end to specify directory
 .vscode/
 .DS_Store
-build/
+bin/
 #exclude SDL2 include and lib files (in this case they are symbolic links so no slash at the end)
 */SDL2*
