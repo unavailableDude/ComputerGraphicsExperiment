@@ -1,7 +1,7 @@
 #pragma once
-#include "SDL2/SDL.h"
-#include "Vec2int.hpp"
-#include "IDisplayable.hpp"
+#include <SDL2/SDL.h>
+#include <Vec2int.hpp>
+#include <IDisplayable.hpp>
 
 
 class Circle : public IDisplayable{

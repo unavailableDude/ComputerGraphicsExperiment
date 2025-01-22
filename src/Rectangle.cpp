@@ -1,4 +1,4 @@
-#include "../include/Rectangle.hpp"
+#include <../include/Rectangle.hpp>
 
 
 Rectangle::Rectangle(int x, int y, int w, int h): pos(x, y), size(w, h){}
