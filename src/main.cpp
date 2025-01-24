@@ -7,9 +7,10 @@
 #include <iostream>
 #include <stdint.h>
 
-#include "../include/SDL2/SDL.h"
-#include "../include/Circle.hpp"
-#include "../include/Rectangle.hpp"
+#include <../include/SDL2/SDL.h>
+#include <../include/Circle.hpp>
+#include <../include/Rectangle.hpp>
+#include <../include/ICoordable.hpp>
 
 
 const int SCREEN_SCALE = 1;
@@ -58,6 +59,8 @@ int main(int argc, char* argv[]){
     bool running = true;
 
     Circle circle1(128, 128, 32);
+    Rectangle rect(128, 128, 64, 64);
+    ICoordable *currShape = &circle1;
     int mouseX = 0, mouseY = 0;
     while(running){
         Uint64 frameStartTimePC = SDL_GetPerformanceCounter();
@@ -73,9 +76,11 @@ int main(int argc, char* argv[]){
                         break;
                     case SDLK_s:
                         break;  
-                    case SDLK_d:
-                        break;
                     case SDLK_a:
+                        currShape = &circle1;
+                        break;
+                    case SDLK_d:
+                        currShape = &rect;
                         break;
                 }
             }
@@ -85,14 +90,14 @@ int main(int argc, char* argv[]){
         SDL_GetMouseState(&mouseX, &mouseY);
         mouseX /= SCREEN_SCALE;
         mouseY /= SCREEN_SCALE;
-        circle1.SetPos(mouseX, mouseY);
+        currShape->SetPos(mouseX, mouseY);
 
         //refresh screen
         SDL_SetRenderDrawColor(renderer1, 0, 0, 0, 255);
         SDL_RenderClear(renderer1);
         SDL_SetRenderDrawColor(renderer1, 255, 255, 255, 255);
 
-        DisplayShapes(&circle1, renderer1);
+        DisplayShapes(dynamic_cast<IDisplayable*>(currShape), renderer1);
 
         SDL_RenderPresent(renderer1);
 

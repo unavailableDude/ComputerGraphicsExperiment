@@ -1,7 +1,10 @@
 #include <../include/Circle.hpp>
 
 
-Circle::Circle(int x, int y, int r) : pos(x, y), r(r) {}
+Circle::Circle(int x, int y, int r){
+    coords = Vec2int(x, y);
+    this->r = r;
+}
 
 void Circle::Display(SDL_Renderer *renderer){
     const int diameter = (r * 2);
@@ -12,15 +15,16 @@ void Circle::Display(SDL_Renderer *renderer){
     int error = tX - diameter;
 
     while(xCurr >= yCurr){
+
         //render 8 octants of the circle
-        SDL_RenderDrawPoint(renderer, pos.x + xCurr, pos.y - yCurr);
-        SDL_RenderDrawPoint(renderer, pos.x + xCurr, pos.y + yCurr);
-        SDL_RenderDrawPoint(renderer, pos.x - xCurr, pos.y - yCurr);
-        SDL_RenderDrawPoint(renderer, pos.x - xCurr, pos.y + yCurr);
-        SDL_RenderDrawPoint(renderer, pos.x + yCurr, pos.y - xCurr);
-        SDL_RenderDrawPoint(renderer, pos.x + yCurr, pos.y + xCurr);
-        SDL_RenderDrawPoint(renderer, pos.x - yCurr, pos.y - xCurr);
-        SDL_RenderDrawPoint(renderer, pos.x - yCurr, pos.y + xCurr);
+        SDL_RenderDrawPoint(renderer, coords.x + xCurr, coords.y - yCurr);
+        SDL_RenderDrawPoint(renderer, coords.x + xCurr, coords.y + yCurr);
+        SDL_RenderDrawPoint(renderer, coords.x - xCurr, coords.y - yCurr);
+        SDL_RenderDrawPoint(renderer, coords.x - xCurr, coords.y + yCurr);
+        SDL_RenderDrawPoint(renderer, coords.x + yCurr, coords.y - xCurr);
+        SDL_RenderDrawPoint(renderer, coords.x + yCurr, coords.y + xCurr);
+        SDL_RenderDrawPoint(renderer, coords.x - yCurr, coords.y - xCurr);
+        SDL_RenderDrawPoint(renderer, coords.x - yCurr, coords.y + xCurr);
         
         //update coords
         if(error <= 0){
@@ -47,10 +51,10 @@ void Circle::DisplayFilled(SDL_Renderer *renderer){
 
     while(xCurr >= yCurr){
         //render 8 octants of the circle
-        SDL_RenderDrawLine(renderer, pos.x + xCurr, pos.y - yCurr, pos.x + xCurr, pos.y + yCurr);
-        SDL_RenderDrawLine(renderer, pos.x - xCurr, pos.y - yCurr, pos.x - xCurr, pos.y + yCurr);
-        SDL_RenderDrawLine(renderer, pos.x + yCurr, pos.y - xCurr, pos.x + yCurr, pos.y + xCurr);
-        SDL_RenderDrawLine(renderer, pos.x - yCurr, pos.y - xCurr, pos.x - yCurr, pos.y + xCurr);
+        SDL_RenderDrawLine(renderer, coords.x + xCurr, coords.y - yCurr, coords.x + xCurr, coords.y + yCurr);
+        SDL_RenderDrawLine(renderer, coords.x - xCurr, coords.y - yCurr, coords.x - xCurr, coords.y + yCurr);
+        SDL_RenderDrawLine(renderer, coords.x + yCurr, coords.y - xCurr, coords.x + yCurr, coords.y + xCurr);
+        SDL_RenderDrawLine(renderer, coords.x - yCurr, coords.y - xCurr, coords.x - yCurr, coords.y + xCurr);
         
         //update coords
         if(error <= 0){
@@ -67,13 +71,14 @@ void Circle::DisplayFilled(SDL_Renderer *renderer){
     }
 }
 
-void Circle::Move(int dx, int dy){
-    pos.x += dx;
-    pos.y += dy;
-}
 void Circle::SetPos(int x, int y){
-    pos.x = x;
-    pos.y = y;
+    coords.x = x;
+    coords.y = y;
+}
+
+void Circle::MovePos(int dx, int dy){
+    coords.x += dx;
+    coords.y += dy;
 }
 
 void Circle::Shrink(int dr){

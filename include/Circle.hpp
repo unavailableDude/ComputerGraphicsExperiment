@@ -2,24 +2,21 @@
 #include <SDL2/SDL.h>
 #include <Vec2int.hpp>
 #include <IDisplayable.hpp>
+#include <ICoordable.hpp>
 
 
-class Circle : public IDisplayable{
+class Circle : public IDisplayable, public ICoordable{
     private:
-    Vec2int pos;
-    int r;
+    float r;
     
     public:
-    //construct
     Circle(int x, int y, int r);
 
-    //display circle
-    virtual void Display(SDL_Renderer *renderer);
-    virtual void DisplayFilled(SDL_Renderer *renderer);
-    
-    //translate circle
-    void Move(int dx, int dy);
-    void SetPos(int x, int y);
+    virtual void Display(SDL_Renderer *renderer) override;
+    virtual void DisplayFilled(SDL_Renderer *renderer) override;
+
+    virtual void SetPos(int x, int y) override;
+    virtual void MovePos(int dx, int dy) override;
     
     void Expand(int dr);
     void Shrink(int dr);
