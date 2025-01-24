@@ -8,7 +8,7 @@
 class Circle : public IDisplayable, public ICoordable{
     private:
     float r;
-    
+        
     public:
     Circle(int x, int y, int r);
 

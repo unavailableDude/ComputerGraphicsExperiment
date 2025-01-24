@@ -3,7 +3,6 @@
     !YOU HAVE BEEN WARNED!
 */
 
-
 #include <iostream>
 #include <stdint.h>
 
@@ -64,6 +63,7 @@ int main(int argc, char* argv[]){
     int mouseX = 0, mouseY = 0;
     while(running){
         Uint64 frameStartTimePC = SDL_GetPerformanceCounter();
+        //read keyboard input
         while(SDL_PollEvent(&event)){
             if(event.type == SDL_QUIT){
                 running = false;

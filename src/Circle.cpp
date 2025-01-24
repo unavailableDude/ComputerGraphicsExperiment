@@ -40,7 +40,6 @@ void Circle::Display(SDL_Renderer *renderer){
         }
     }
 }
-
 void Circle::DisplayFilled(SDL_Renderer *renderer){
     const int diameter = (r * 2);
     int xCurr = r - 1;
@@ -74,7 +73,6 @@ void Circle::DisplayFilled(SDL_Renderer *renderer){
 void Circle::SetPos(int x, int y){
     ICoordable::SetPos(x, y);
 }
-
 void Circle::MovePos(int dx, int dy){
     ICoordable::MovePos(dx, dy);
 }
@@ -82,7 +80,6 @@ void Circle::MovePos(int dx, int dy){
 void Circle::Shrink(int dr){
     r ? r -= dr : r;
 }
-
 void Circle::Expand(int dr){
     r ? r += dr : r += dr;
 }
