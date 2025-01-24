@@ -72,13 +72,11 @@ void Circle::DisplayFilled(SDL_Renderer *renderer){
 }
 
 void Circle::SetPos(int x, int y){
-    coords.x = x;
-    coords.y = y;
+    ICoordable::SetPos(x, y);
 }
 
 void Circle::MovePos(int dx, int dy){
-    coords.x += dx;
-    coords.y += dy;
+    ICoordable::MovePos(dx, dy);
 }
 
 void Circle::Shrink(int dr){
