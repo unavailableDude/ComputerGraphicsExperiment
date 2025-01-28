@@ -24,6 +24,17 @@ void Rectangle::MovePos(int dx, int dy){
     Center();
 }
 
+void Rectangle::SetSize(int w, int h){
+    size.x = w;
+    size.y = h;
+    Center();
+}
+void Rectangle::ChangeSize(int dw, int dh){
+    size.x += dw;
+    size.y += dh;
+    Center();
+}
+
 void Rectangle::Center(){
     coords.x -= size.x / 2;
     coords.y -= size.y / 2;

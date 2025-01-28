@@ -10,6 +10,7 @@
 #include <../include/Circle.hpp>
 #include <../include/Rectangle.hpp>
 #include <../include/ICoordable.hpp>
+#include <../include/IShape.hpp>
 
 
 const int SCREEN_SCALE = 1;
@@ -57,10 +58,12 @@ int main(int argc, char* argv[]){
     SDL_Event event;
     bool running = true;
 
-    Circle circle1(128, 128, 32);
-    Rectangle rect(128, 128, 64, 64);
-    ICoordable *currShape = &circle1;
-    int mouseX = 0, mouseY = 0;
+    Vec2int currShapeSize(64, 64);
+    Circle circle1(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, currShapeSize.x / 2);       //r = w / 2 because r represents the radius, not the diameter
+    Rectangle rect(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, currShapeSize.x, currShapeSize.y);
+    IShape *currShape = &circle1;
+    
+    int mouseX = SCREEN_WIDTH / 2, mouseY = SCREEN_HEIGHT / 2;
     while(running){
         Uint64 frameStartTimePC = SDL_GetPerformanceCounter();
         //read keyboard input
@@ -73,14 +76,22 @@ int main(int argc, char* argv[]){
             else if(event.type == SDL_KEYDOWN){
                 switch(event.key.keysym.sym){
                     case SDLK_w:
+                        currShapeSize.x += 1;
+                        currShapeSize.y += 1;
+                        currShape->SetSize(currShapeSize.x, currShapeSize.y);
                         break;
                     case SDLK_s:
+                        currShapeSize.x -= 1;
+                        currShapeSize.y -= 1;
+                        currShape->SetSize(currShapeSize.x, currShapeSize.y);
                         break;  
                     case SDLK_a:
                         currShape = &circle1;
+                        currShape->SetSize(currShapeSize.x, currShapeSize.y);
                         break;
                     case SDLK_d:
                         currShape = &rect;
+                        currShape->SetSize(currShapeSize.x, currShapeSize.y);
                         break;
                 }
             }

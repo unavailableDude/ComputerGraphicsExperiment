@@ -3,5 +3,3 @@
 .vscode/
 .DS_Store
 bin/
-#exclude SDL2 include and lib files (in this case they are symbolic links so no slash at the end)
-*/SDL2*

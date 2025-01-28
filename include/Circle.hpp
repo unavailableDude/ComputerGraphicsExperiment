@@ -1,11 +1,10 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include <Vec2int.hpp>
-#include <IDisplayable.hpp>
-#include <ICoordable.hpp>
+#include <IShape.hpp>
 
 
-class Circle : public IDisplayable, public ICoordable{
+class Circle : public IShape{
     private:
     float r;
         
@@ -18,6 +17,6 @@ class Circle : public IDisplayable, public ICoordable{
     virtual void SetPos(int x, int y) override;
     virtual void MovePos(int dx, int dy) override;
     
-    void Expand(int dr);
-    void Shrink(int dr);
+    virtual void SetSize(int w, int h) override;
+    virtual void ChangeSize(int dw, int dh) override;
 };

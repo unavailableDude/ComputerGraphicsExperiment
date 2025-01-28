@@ -77,9 +77,10 @@ void Circle::MovePos(int dx, int dy){
     ICoordable::MovePos(dx, dy);
 }
 
-void Circle::Shrink(int dr){
-    r ? r -= dr : r;
+void Circle::SetSize(int w, int h){
+    r = w / 2;
 }
-void Circle::Expand(int dr){
-    r ? r += dr : r += dr;
+
+void Circle::ChangeSize(int dw, int dh){
+    r += dw;
 }
