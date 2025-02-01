@@ -1,11 +1,11 @@
 SRC_DIR = src
 BUILD_DIR = bin/debug
 CC = g++
-SRC_FILES = $(wildcard $(SRC_DIR)/*.cpp)
+SRC_FILES = $(wildcard $(SRC_DIR)/*.cpp) glad/src/glad.c
 OBJ_NAME = oneLiner
-INCLUDE_PATHS = -Iinclude
+INCLUDE_PATHS = -Iinclude -Iglad/include
 LIBRARY_PATHS = -Llib
-LIBRARY_PATHS_LX = -Llib/SDL2
+LIBRARY_PATHS_LX = -Llib/SDL2 -ldl
 COMPILER_FLAGS = -std=c++17 -Wall -O0 -g
 LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2
 LINKER_FLAGS_LX = -lsdl2
