@@ -109,11 +109,12 @@ void PreDraw(){
 	glUseProgram(CreateShader(vertexShader1, fragmentShader1));
 }
 
-void Draw(GLuint vertexArrayObject, GLuint vertexBufferObject){
+void Draw(GLuint vertexArrayObject, const GLuint vertexBufferObject){
 	glBindVertexArray(vertexArrayObject);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
 
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	// glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 float deltaTime = 0;
@@ -168,35 +169,41 @@ int main(int argc, char* argv[]){
 		mouseY /= SCREEN_SCALE;
 
 		//specify a triangle
-		const std::vector<GLfloat> triangle1Verts{
-		   //x,  y, z
-			-1, -1, 0,	//vert 1
-			 1, -1, 0,	//vert 2
-			 0,  1, 0	//vert 3
+		const std::vector<GLfloat> vertexData{
+		   //x,  y,  z
+		   //R,  G,  B
+			-1, -1,  0,	//vert 1 bottomLeft
+			 1,  0,  0,
+			 1, -1,  0,	//vert 2 bottomRight
+			 0,  1,  0,
+			-1,  1,  0,	//vert 3 topLeft
+			 0,  0,  1,
+			 1,  1,  0,	//vert 4 topRight
+			 1,  0,  0
 		};
-		const std::vector<GLfloat> triangle1Colors{
-		   //R, G, B
-			 1, 0, 0,
-			 0, 1, 0,
-			 0, 0, 1
+
+		const std::vector<GLuint> indexData{
+			0, 1, 2,
+			2, 1, 3
 		};
 
 		GLuint vao1 = 0;
 		GLuint vbo1 = 0;
-		GLuint vbo2 = 0;
-		glGenVertexArrays(1, &vao1);			//generate 1 vao1, and store it in vao1
-		glBindVertexArray(vao1);				//bind vao1, essentially select it to do something...
-		glGenBuffers(1, &vbo1);					//generate 1 buffer, and store it in vbo1
-		glBindBuffer(GL_ARRAY_BUFFER, vbo1);	//bind vbo1, essentially select it to do something...
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * triangle1Verts.size(), triangle1Verts.data(), GL_STATIC_DRAW);	//copy data to vbo1
-		glEnableVertexAttribArray(0);			//enable vertex attribute array 0 which is the position attribute
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);	//0 for position attribute, 3 for number of components, GL_FLOAT for data type, GL_FALSE for normalized, 0 for stride, 0 for offset
+		GLuint ibo1 = 0;
+		glGenVertexArrays(1, &vao1);																					//generate 1 vao1, and store it in vao1
+		glBindVertexArray(vao1);																						//bind vao1, essentially select it to do something...
+		glGenBuffers(1, &vbo1);																							//generate 1 buffer, and store it in vbo1
+		glBindBuffer(GL_ARRAY_BUFFER, vbo1);																			//bind vbo1, essentially select it to do something...
+		glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * vertexData.size(), vertexData.data(), GL_STATIC_DRAW);			//copy data to vbo1 (populate vbo1)
 
-		glGenBuffers(1, &vbo2);					//generate 1 buffer, and store it in vbo2
-		glBindBuffer(GL_ARRAY_BUFFER, vbo2);	//bind vbo2, essentially select it to do something...
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * triangle1Colors.size(), triangle1Colors.data(), GL_STATIC_DRAW);	//copy data to vbo2
-		glEnableVertexAttribArray(1);			//enable vertex attribute array 1 which is the color attribute
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);	//1 for color attribute, 3 for number of components, GL_FLOAT for data type, GL_FALSE for normalized, 0 for stride, 0 for offset
+		glGenBuffers(1, &ibo1);																							//generate 1 buffer, and store it in ibo1
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo1);																	//bind ibo1, essentially select it to do something...
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER,indexData.size() * sizeof(GLuint), indexData.data(), GL_STATIC_DRAW);		//copy data to ibo1 (populate ibo1)
+
+		glEnableVertexAttribArray(0);																					//enable vertex attribute array 0 which is the position attribute
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GL_FLOAT), (GLvoid*)0);								//0 for position attribute, 3 for number of components, GL_FLOAT for data type, GL_FALSE for normalized, 6 for stride, 0 for offset
+		glEnableVertexAttribArray(1);																					//enable vertex attribute array 1 which is the color attribute
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GL_FLOAT), (GLvoid*)(3 * sizeof(GL_FLOAT)));			//1 for color attribute,    3 for number of components, GL_FLOAT for data type, GL_FALSE for normalized, 6 for stride, 3 for offset
 
 		//unbind vao1 and disable open attrib arrays
 		glBindVertexArray(0);
@@ -206,7 +213,6 @@ int main(int argc, char* argv[]){
 
 		PreDraw();
 		Draw(vao1, vbo1);
-		Draw(vao1, vbo2);
 
 
 		SDL_GL_SwapWindow(window1);
