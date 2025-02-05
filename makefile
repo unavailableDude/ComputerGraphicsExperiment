@@ -1,9 +1,9 @@
 SRC_DIR = src
 BUILD_DIR = bin/debug
 CC = g++
-SRC_FILES = $(wildcard $(SRC_DIR)/*.cpp) glad/src/glad.c
+SRC_FILES = $(wildcard $(SRC_DIR)/*.cpp) glad/src/glad.c $(wildcard imgui/*.cpp)
 OBJ_NAME = oneLiner
-INCLUDE_PATHS = -Iinclude -Iglad/include
+INCLUDE_PATHS = -Iinclude -Iinclude/SDL2 -Iglad/include -Iinclude/imgui
 LIBRARY_PATHS = -Llib
 LIBRARY_PATHS_LX = -Llib/SDL2 -ldl
 COMPILER_FLAGS = -std=c++17 -Wall -O0 -g

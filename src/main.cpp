@@ -20,6 +20,10 @@
 //third party
 #include <../glad/include/glad/glad.h>
 
+#include <../include/imgui/imgui.h>
+#include <../include/imgui/imgui_impl_sdl2.h>
+#include <../include/imgui/imgui_impl_sdlrenderer2.h>
+
 
 const int SCREEN_SCALE = 1;
 int SCREEN_WIDTH = 800;
@@ -52,6 +56,9 @@ void OGLSetup(){
 
 void Cleanup(){
 	SDL_Quit();
+	ImGui_ImplSDLRenderer2_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
 }
 
 GLuint CompileShader(GLenum shaderType, const std::string &shaderSrc){
@@ -118,6 +125,7 @@ void Draw(GLuint vertexArrayObject, const GLuint vertexBufferObject){
 }
 
 float deltaTime = 0;
+float frameTimeDeltaMiliS = 0;
 int main(int argc, char* argv[]){
 	if(SDL_Init(SDL_INIT_EVERYTHING)){
 		std::cout << "SDL_INIT failed with error: " << SDL_GetError() << std::endl;
@@ -125,8 +133,14 @@ int main(int argc, char* argv[]){
 	}
 
 	SDL_Window *window1 = SDL_CreateWindow("Window 1", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+	SDL_Window *profileWindow = SDL_CreateWindow("Profiler", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN);
+	SDL_Renderer *profileRenderer = SDL_CreateRenderer(profileWindow, 1, 0);
 	SDL_GLContext glContext = SDL_GL_CreateContext(window1);	//create opengl context object
 	if(window1 == nullptr){
+		std::cout << "SDL_CreateWindow failed with error: " << SDL_GetError() << std::endl;
+		return EXIT_FAILURE;
+	}
+	if(profileWindow == nullptr){
 		std::cout << "SDL_CreateWindow failed with error: " << SDL_GetError() << std::endl;
 		return EXIT_FAILURE;
 	}
@@ -137,18 +151,29 @@ int main(int argc, char* argv[]){
 
 	OGLSetup();
 
+	//init imgui
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO &io = ImGui::GetIO(); (void)io;
+	ImGui_ImplSDL2_InitForSDLRenderer(profileWindow, profileRenderer);
+	ImGui_ImplSDLRenderer2_Init(profileRenderer);
+
 	SDL_Event event;
 	bool running = true;
 	int mouseX = SCREEN_WIDTH / 2, mouseY = SCREEN_HEIGHT / 2;
+
 	while(running){
-		SDL_GetWindowSizeInPixels(window1, &SCREEN_WIDTH, &SCREEN_HEIGHT);
 		Uint64 frameStartTimePC = SDL_GetPerformanceCounter();
+		SDL_GetWindowSizeInPixels(window1, &SCREEN_WIDTH, &SCREEN_HEIGHT);
 		//read keyboard input
 		while(SDL_PollEvent(&event)){
-			if(event.type == SDL_QUIT){
+			ImGui_ImplSDL2_ProcessEvent(&event);
+			if(event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE){
 				running = false;
 				SDL_DestroyWindow(window1);
+				SDL_DestroyWindow(profileWindow);
 				Cleanup();
+				return 0;
 			}
 			else if(event.type == SDL_KEYDOWN){
 				switch(event.key.keysym.sym){
@@ -181,11 +206,23 @@ int main(int argc, char* argv[]){
 			 1,  1,  0,	//vert 4 topRight
 			 1,  0,  0
 		};
-
 		const std::vector<GLuint> indexData{
 			0, 1, 2,
 			2, 1, 3
 		};
+
+		ImGui_ImplSDLRenderer2_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
+		ImGui::StyleColorsDark();
+		ImGui::Begin("Profiler");
+		ImGui::Text("Hello, world!");
+		ImGui::Text("Screen Width: %d, Screen Height: %d", SCREEN_WIDTH, SCREEN_HEIGHT);
+		ImGui::Text("MouseX: %d, MouseY: %d", mouseX, mouseY);
+		ImGui::Text("Delta Time: %f", deltaTime);
+		ImGui::Text("frameTimeDeltaMiliS: %f", frameTimeDeltaMiliS);
+		ImGui::End();
+		ImGui::Render();
 
 		GLuint vao1 = 0;
 		GLuint vbo1 = 0;
@@ -214,19 +251,24 @@ int main(int argc, char* argv[]){
 		PreDraw();
 		Draw(vao1, vbo1);
 
+		SDL_SetRenderDrawColor(profileRenderer, 0, 0, 0, 1);
+		SDL_RenderClear(profileRenderer);
+		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), profileRenderer);
+		SDL_RenderPresent(profileRenderer);
 
 		SDL_GL_SwapWindow(window1);
 		//calculate frame time to render, and delay by <desired frame time> - <current frame time> to make up the rest of the delay,
 		//then calculate total frame (delay + render) time and print it
+		// @todo investiminigate why the hell is the frameTimeDeltaMiliS is not consistent
 		{
 			uint64_t frameEndTimePC = SDL_GetPerformanceCounter();
-			float frameTimeDeltaMiliS = (frameEndTimePC - frameStartTimePC) / (float)SDL_GetPerformanceFrequency();
+			frameTimeDeltaMiliS = (frameEndTimePC - frameStartTimePC) / (float)SDL_GetPerformanceFrequency();
 			float delayTimeMiliS = (1000 / DESIRED_FPS) - frameTimeDeltaMiliS;
 			deltaTime += frameTimeDeltaMiliS;
 			SDL_Delay(delayTimeMiliS);
-			//maybe causing a bit more delay (~2 msec)
+			//maybe causing extra delay
 			float totalFrameTimeMiliS = ((SDL_GetPerformanceCounter() - frameStartTimePC) / (float)SDL_GetPerformanceFrequency()) * 1000;
-			ProfilerOnWindowTitle(window1, totalFrameTimeMiliS, frameTimeDeltaMiliS, delayTimeMiliS);
+			//ProfilerOnWindowTitle(window1, totalFrameTimeMiliS, frameTimeDeltaMiliS, delayTimeMiliS);
 		}
 		#ifdef PROFILING
 		std::cout << "frameStartTimePC: " << frameStartTimePC
