@@ -11,11 +11,8 @@
 
 //first party
 #include <../include/SDL2/SDL.h>
-#include <../include/Circle.hpp>
-#include <../include/Rectangle.hpp>
-#include <../include/ICoordable.hpp>
-#include <../include/IShape.hpp>
 #include <../include/ShaderLoader.hpp>
+#include <../include/ShaderProgram.hpp>
 
 //third party
 #include <../glad/include/glad/glad.h>
@@ -30,13 +27,6 @@ int SCREEN_WIDTH = 800;
 int SCREEN_HEIGHT = 480;
 uint16_t DESIRED_FPS = 60;  //try UINT16_MAX, it's fun
 
-#ifdef PROFILING
-void ProfilerOnWindowTitle(SDL_Window *wind, float totalFrameTimeMiliS, float frameTimeDeltaMiliS, float delayTimeMiliS){
-	SDL_SetWindowTitle(wind, ("totalFrameTimeMiliS: "    + std::to_string(totalFrameTimeMiliS) + 
-							  "\t frameTimeDeltaMiliS: " + std::to_string(frameTimeDeltaMiliS) + 
-							  "\t delayTimeMiliS: "      + std::to_string(delayTimeMiliS)).c_str());
-}
-#endif
 
 void OGLGetInfo(){
 	std::cout << "OpenGL Vendor: " << glGetString(GL_VENDOR) << std::endl;
@@ -63,37 +53,6 @@ void Cleanup(){
 	ImGui::DestroyContext();
 }
 
-GLuint CompileShader(GLenum shaderType, const std::string &shaderSrc){
-	GLuint shaderObject;
-	
-	if(shaderType == GL_VERTEX_SHADER){
-		shaderObject = glCreateShader(GL_VERTEX_SHADER);
-	
-	}else if(shaderType == GL_FRAGMENT_SHADER){
-		shaderObject = glCreateShader(GL_FRAGMENT_SHADER);
-	}
-	const char *src = shaderSrc.c_str();
-	glShaderSource(shaderObject, 1, &src, nullptr);
-	glCompileShader(shaderObject);
-
-	return shaderObject;
-}
-
-GLuint CreateShader(const std::string &vShaderSrc, const std::string &fShaderSrc){
-	GLuint programObject = glCreateProgram();
-	//make shaders
-	GLuint vertexShader   = CompileShader(GL_VERTEX_SHADER, vShaderSrc);
-	GLuint fragmentShader = CompileShader(GL_FRAGMENT_SHADER, fShaderSrc);
-	//attach shaders to program
-	glAttachShader(programObject, vertexShader);
-	glAttachShader(programObject, fragmentShader);
-	glLinkProgram(programObject);
-	//check for errors
-	glValidateProgram(programObject);
-
-	return programObject;
-}
-
 
 //shader filenames const
 const std::string vertShader1Path = "shaders/vertShader1.vert";
@@ -101,18 +60,8 @@ const std::string fragShader1Path = "shaders/fragShader1.frag";
 const std::string psyShaderFragPath = "shaders/psyShader.frag";
 const std::string theGreatSunFragPath = "shaders/theGreatSun.frag";
 
-//shader loader
-ShaderLoader shaderLoader;
 
-//load shaders
-const std::string vertexShader1 = shaderLoader.LoadShaderFromFile(vertShader1Path);
-const std::string fragmentShader1 = shaderLoader.LoadShaderFromFile(theGreatSunFragPath);
-GLuint shaderProgram1 = 0;
-GLint shaderTimeLocation = 0;
-GLint shaderResolutionLocation = 0;
-
-
-void PreDraw(GLuint program, float shaderTime, Vec2int u_resolution){
+void PreDraw(ShaderProgram program, float shaderTime, Vec2int u_resolution){
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
@@ -120,9 +69,9 @@ void PreDraw(GLuint program, float shaderTime, Vec2int u_resolution){
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glUseProgram(program);
-	glUniform1f(shaderTimeLocation, shaderTime);
-	glUniform2f(shaderResolutionLocation, (float)u_resolution.x, (float)u_resolution.y);
+	program.Use();
+	program.SetUniformTime(shaderTime);
+	program.SetUniformResolution(u_resolution);
 }
 
 void Draw(GLuint vertexArrayObject, const GLuint vertexBufferObject){
@@ -135,6 +84,7 @@ void Draw(GLuint vertexArrayObject, const GLuint vertexBufferObject){
 
 float deltaTime = 0;
 float frameTimeDeltaMiliS = 0;
+float framerate = 0;
 int main(int argc, char* argv[]){
 	if(SDL_Init(SDL_INIT_EVERYTHING)){
 		std::cout << "SDL_INIT failed with error: " << SDL_GetError() << std::endl;
@@ -159,10 +109,9 @@ int main(int argc, char* argv[]){
 	}
 
 	OGLSetup();
-	//populate these
-	shaderProgram1 = CreateShader(vertexShader1, fragmentShader1);
-	shaderTimeLocation = glGetUniformLocation(shaderProgram1, "u_time");
-	shaderResolutionLocation = glGetUniformLocation(shaderProgram1, "u_resolution");
+
+	ShaderProgram program1{vertShader1Path, theGreatSunFragPath, Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT)};
+	program1.LogInfo();
 
 	//init imgui
 	IMGUI_CHECKVERSION();
@@ -202,6 +151,10 @@ int main(int argc, char* argv[]){
 						SCREEN_WIDTH = SCREEN_HEIGHT;
 						SDL_SetWindowSize(window1, SCREEN_WIDTH, SCREEN_HEIGHT);
 						break;
+					case SDLK_b:
+						bool isBordered = SDL_GetWindowFlags(window1) & SDL_WINDOW_BORDERLESS; 
+						SDL_SetWindowBordered(window1, isBordered ? SDL_TRUE : SDL_FALSE);
+						break;
 				}
 			}
 		}
@@ -228,16 +181,16 @@ int main(int argc, char* argv[]){
 			2, 1, 3
 		};
 
+		//imgui frame
 		ImGui_ImplSDLRenderer2_NewFrame();
 		ImGui_ImplSDL2_NewFrame();
 		ImGui::NewFrame();
 		ImGui::StyleColorsDark();
 		ImGui::Begin("Profiler");
-		ImGui::Text("Hello, world!");
 		ImGui::Text("Screen Width: %d, Screen Height: %d", SCREEN_WIDTH, SCREEN_HEIGHT);
 		ImGui::Text("MouseX: %d, MouseY: %d", mouseX, mouseY);
 		ImGui::Text("Delta Time: %f", deltaTime);
-		ImGui::Text("frameTimeDeltaMiliS: %f", frameTimeDeltaMiliS);
+		ImGui::Text("Frame rate: %f", framerate);
 		ImGui::End();
 		ImGui::Render();
 
@@ -265,7 +218,7 @@ int main(int argc, char* argv[]){
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 
-		PreDraw(shaderProgram1, deltaTime, Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT));
+		PreDraw(program1, deltaTime, Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT));
 		Draw(vao1, vbo1);
 
 		SDL_SetRenderDrawColor(profileRenderer, 0, 0, 0, 1);
@@ -274,6 +227,7 @@ int main(int argc, char* argv[]){
 		SDL_RenderPresent(profileRenderer);
 
 		SDL_GL_SwapWindow(window1);
+
 		//calculate frame time to render, and delay by <desired frame time> - <current frame time> to make up the rest of the delay,
 		//then calculate total frame (delay + render) time and print it
 		// @todo investiminigate why the hell is the frameTimeDeltaMiliS is not consistent
@@ -282,10 +236,10 @@ int main(int argc, char* argv[]){
 			frameTimeDeltaMiliS = (frameEndTimePC - frameStartTimePC) / (float)SDL_GetPerformanceFrequency();
 			float delayTimeMiliS = (1000 / DESIRED_FPS) - frameTimeDeltaMiliS;
 			deltaTime += ImGui::GetIO().DeltaTime;
-			SDL_Delay(delayTimeMiliS);
+			framerate = ImGui::GetIO().Framerate;
+			// SDL_Delay(delayTimeMiliS);
 			//maybe causing extra delay
 			//float totalFrameTimeMiliS = ((SDL_GetPerformanceCounter() - frameStartTimePC) / (float)SDL_GetPerformanceFrequency()) * 1000;
-			//ProfilerOnWindowTitle(window1, totalFrameTimeMiliS, frameTimeDeltaMiliS, delayTimeMiliS);
 		}
 		#ifdef PROFILING
 		std::cout << "frameStartTimePC: " << frameStartTimePC
