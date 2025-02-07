@@ -1,6 +1,8 @@
 /*
 	WARNING! the code you see here may cause you to have eye cancer
 	!YOU HAVE BEEN WARNED!
+	todo: refactor this code.
+	todo: dynamically load in fragment shaders with a gui button.
 */
 //#define PROFILING
 
@@ -53,13 +55,36 @@ void Cleanup(){
 	ImGui::DestroyContext();
 }
 
-
 //shader filenames const
 const std::string vertShader1Path = "shaders/vertShader1.vert";
 const std::string fragShader1Path = "shaders/fragShader1.frag";
 const std::string psyShaderFragPath = "shaders/psyShader.frag";
 const std::string theGreatSunFragPath = "shaders/theGreatSun.frag";
+char customFragShaderPath[256] = "shaders/theGreatSun.frag";
+bool didShaderChange = false;
 
+void ImGuiProfilerFrame(float deltaTime, float framerate){
+	ImGui::StyleColorsDark();
+	ImGui::Begin("Profiler");
+	ImGui::Text("Screen Width: %d, Screen Height: %d", SCREEN_WIDTH, SCREEN_HEIGHT);
+	ImGui::Text("Delta Time: %f", deltaTime);
+	ImGui::Text("Frame rate: %f", framerate);
+	ImGui::End();
+}
+
+void ImGuiShaderInputFrame(){
+	ImGui::Begin("Shader Editor");
+	ImGui::Text("path to fragment shader:");
+	static char inputFragmentShaderPath[256] = "shaders\\theGreatSun.frag";
+	ImGui::InputText("##path", inputFragmentShaderPath, 256);
+	ImGui::Text("Current fragment shader path:");
+	ImGui::Text(customFragShaderPath);
+	if(ImGui::Button("Load Shader")){
+		strcpy(customFragShaderPath, inputFragmentShaderPath);
+		didShaderChange = true;
+	}
+	ImGui::End();
+}
 
 void PreDraw(ShaderProgram program, float shaderTime, Vec2int u_resolution){
 	glDisable(GL_DEPTH_TEST);
@@ -110,7 +135,7 @@ int main(int argc, char* argv[]){
 
 	OGLSetup();
 
-	ShaderProgram program1{vertShader1Path, theGreatSunFragPath, Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT)};
+	ShaderProgram program1{vertShader1Path, customFragShaderPath, Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT)};
 	program1.LogInfo();
 
 	//init imgui
@@ -163,6 +188,12 @@ int main(int argc, char* argv[]){
 		mouseX /= SCREEN_SCALE;
 		mouseY /= SCREEN_SCALE;
 
+		if(didShaderChange){
+			program1.ReloadShader(vertShader1Path, customFragShaderPath);
+			program1.LogInfo();
+			didShaderChange = false;
+		}
+
 		//specify a triangle
 		const std::vector<GLfloat> vertexData{
 		   //x,  y,  z
@@ -181,18 +212,6 @@ int main(int argc, char* argv[]){
 			2, 1, 3
 		};
 
-		//imgui frame
-		ImGui_ImplSDLRenderer2_NewFrame();
-		ImGui_ImplSDL2_NewFrame();
-		ImGui::NewFrame();
-		ImGui::StyleColorsDark();
-		ImGui::Begin("Profiler");
-		ImGui::Text("Screen Width: %d, Screen Height: %d", SCREEN_WIDTH, SCREEN_HEIGHT);
-		ImGui::Text("MouseX: %d, MouseY: %d", mouseX, mouseY);
-		ImGui::Text("Delta Time: %f", deltaTime);
-		ImGui::Text("Frame rate: %f", framerate);
-		ImGui::End();
-		ImGui::Render();
 
 		GLuint vao1 = 0;
 		GLuint vbo1 = 0;
@@ -223,7 +242,15 @@ int main(int argc, char* argv[]){
 
 		SDL_SetRenderDrawColor(profileRenderer, 0, 0, 0, 1);
 		SDL_RenderClear(profileRenderer);
+
+		ImGui_ImplSDLRenderer2_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
+		ImGuiProfilerFrame(deltaTime, framerate);
+		ImGuiShaderInputFrame();
+		ImGui::Render();
 		ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), profileRenderer);
+		
 		SDL_RenderPresent(profileRenderer);
 
 		SDL_GL_SwapWindow(window1);
@@ -237,7 +264,7 @@ int main(int argc, char* argv[]){
 			float delayTimeMiliS = (1000 / DESIRED_FPS) - frameTimeDeltaMiliS;
 			deltaTime += ImGui::GetIO().DeltaTime;
 			framerate = ImGui::GetIO().Framerate;
-			// SDL_Delay(delayTimeMiliS);
+			SDL_Delay(delayTimeMiliS);
 			//maybe causing extra delay
 			//float totalFrameTimeMiliS = ((SDL_GetPerformanceCounter() - frameStartTimePC) / (float)SDL_GetPerformanceFrequency()) * 1000;
 		}

@@ -34,6 +34,13 @@ void ShaderProgram::LogInfo(){
 	std::cout << "GLint u_resolutionLocation: " << u_resolutionLocation << std::endl;
 }
 
+void ShaderProgram::ReloadShader(const std::string &vShaderSrcPath, const std::string &fShaderSrcPath){
+	glDeleteProgram(program);
+	program = CreateShader(vShaderSrcPath, fShaderSrcPath);
+	u_timeLocation = glGetUniformLocation(program, "u_time");
+	u_resolutionLocation = glGetUniformLocation(program, "u_resolution");
+}
+
 //private:
 GLuint ShaderProgram::CompileShader(GLenum shaderType, const std::string &shaderSrc){
 	GLuint shaderObject;

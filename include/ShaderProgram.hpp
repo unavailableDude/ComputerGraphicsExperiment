@@ -24,6 +24,7 @@ class ShaderProgram{
 	GLuint GetProgram();
 
 	void LogInfo();
+	void ReloadShader(const std::string &vShaderSrcPath, const std::string &fShaderSrcPath);
 
 	private:
 	GLuint CompileShader(GLenum shaderType, const std::string &shaderSrc);
