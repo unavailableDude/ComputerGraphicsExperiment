@@ -1,11 +1,11 @@
 #version 410 compatibility
 
 
-out vec4 fragColor;
 in vec3 vertCol;
 
 uniform float u_time;
+uniform vec2 u_resolution;
 
 void main(){
-	fragColor = vec4(vertCol * fract(u_time), 1.0);
+	gl_FragColor = vec4(vertCol * fract(u_time), 1.0);
 }

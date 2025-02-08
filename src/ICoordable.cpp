@@ -1,13 +1,13 @@
 #include <../include/ICoordable.hpp>
 
 
-ICoordable::ICoordable() : coords(0, 0){}
-ICoordable::ICoordable(int x, int y) : coords(x, y){}
+ICoordable::ICoordable() : _coords(0, 0){}
+ICoordable::ICoordable(int x, int y) : _coords(x, y){}
 
 void ICoordable::SetPos(int x, int y){
-	coords = Vec2int(x, y);
+	_coords = Vec2int(x, y);
 }
 
 void ICoordable::MovePos(int dx, int dy){
-	coords = Vec2int(coords.x + dx, coords.y + dy);
+	_coords = Vec2int(_coords._x + dx, _coords._y + dy);
 }

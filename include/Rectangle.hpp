@@ -6,7 +6,7 @@
 
 class Rectangle : public IShape{
 	private:
-	Vec2int size;
+	Vec2int _size;
 	
 	public:
 	Rectangle(int x, int y, int w, int h);

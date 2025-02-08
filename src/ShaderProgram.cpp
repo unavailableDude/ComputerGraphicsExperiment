@@ -1,12 +1,12 @@
 #include <../include/ShaderProgram.hpp>
 
 //public:
-ShaderProgram::ShaderProgram(const std::string &vShaderSrcPath, const std::string &fShaderSrcPath, Vec2int resolution) : program(CreateShader(vShaderSrcPath, fShaderSrcPath)), u_time(0.0f), u_resolution(resolution){
-	u_timeLocation = glGetUniformLocation(program, "u_time");
-	u_resolutionLocation = glGetUniformLocation(program, "u_resolution");
+ShaderProgram::ShaderProgram(const std::string &vShaderSrcPath, const std::string &fShaderSrcPath, Vec2int resolution) : _program(CreateShader(vShaderSrcPath, fShaderSrcPath)), u_time(0.0f), u_resolution(resolution){
+	u_timeLocation = glGetUniformLocation(_program, "u_time");
+	u_resolutionLocation = glGetUniformLocation(_program, "u_resolution");
 }
 ShaderProgram::~ShaderProgram(){
-	glDeleteProgram(program);
+	glDeleteProgram(_program);
 }
 
 void ShaderProgram::SetUniformTime(float time){
@@ -15,30 +15,30 @@ void ShaderProgram::SetUniformTime(float time){
 }
 void ShaderProgram::SetUniformResolution(const Vec2int resolution){
 	u_resolution = resolution;
-	glUniform2f(u_resolutionLocation, (float)resolution.x, (float)resolution.y);
+	glUniform2f(u_resolutionLocation, (float)resolution._x, (float)resolution._y);
 }
 
 void ShaderProgram::Use(){
-	glUseProgram(program);
+	glUseProgram(_program);
 }
 GLuint ShaderProgram::GetProgram(){
-	return program;
+	return _program;
 }
 
 void ShaderProgram::LogInfo(){
 	std::cout << "Shader Program Info: " << std::endl;
-	std::cout << "GLuint program: " << program << std::endl;
+	std::cout << "GLuint program: " << _program << std::endl;
 	std::cout << "float u_time: " << u_time << std::endl;
-	std::cout << "Vec2int u_resolution: x = " << u_resolution.x << "  y = " << u_resolution.y << std::endl;
+	std::cout << "Vec2int u_resolution: x = " << u_resolution._x << "  y = " << u_resolution._y << std::endl;
 	std::cout << "GLint u_timeLocation: " << u_timeLocation << std::endl;
 	std::cout << "GLint u_resolutionLocation: " << u_resolutionLocation << std::endl;
 }
 
 void ShaderProgram::ReloadShader(const std::string &vShaderSrcPath, const std::string &fShaderSrcPath){
-	glDeleteProgram(program);
-	program = CreateShader(vShaderSrcPath, fShaderSrcPath);
-	u_timeLocation = glGetUniformLocation(program, "u_time");
-	u_resolutionLocation = glGetUniformLocation(program, "u_resolution");
+	glDeleteProgram(_program);
+	_program = CreateShader(vShaderSrcPath, fShaderSrcPath);
+	u_timeLocation = glGetUniformLocation(_program, "u_time");
+	u_resolutionLocation = glGetUniformLocation(_program, "u_resolution");
 }
 
 //private:

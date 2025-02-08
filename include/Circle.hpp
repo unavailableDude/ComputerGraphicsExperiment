@@ -6,7 +6,7 @@
 
 class Circle : public IShape{
 	private:
-	float r;
+	float _r;
 		
 	public:
 	Circle(int x, int y, int r);

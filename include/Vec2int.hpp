@@ -2,6 +2,6 @@
 
 
 class Vec2int{
-	public: int x, y;
+	public: int _x, _y;
 	Vec2int(int x, int y);
 };

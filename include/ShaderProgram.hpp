@@ -7,7 +7,7 @@
 
 class ShaderProgram{
 	private:
-	GLuint program;
+	GLuint _program;
 	float u_time;
 	Vec2int u_resolution;
 	GLint u_timeLocation;

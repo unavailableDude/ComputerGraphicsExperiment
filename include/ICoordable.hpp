@@ -4,7 +4,7 @@
 
 class ICoordable{
 	protected:
-	Vec2int coords;
+	Vec2int _coords;
 	
 	public:
 	virtual ~ICoordable(){}

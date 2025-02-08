@@ -2,7 +2,6 @@
 	WARNING! the code you see here may cause you to have eye cancer
 	!YOU HAVE BEEN WARNED!
 	todo: refactor this code.
-	todo: dynamically load in fragment shaders with a gui button.
 */
 //#define PROFILING
 
@@ -15,6 +14,8 @@
 #include <../include/SDL2/SDL.h>
 #include <../include/ShaderLoader.hpp>
 #include <../include/ShaderProgram.hpp>
+#include <../include/VertexBuffer.hpp>
+#include <../include/IndexBuffer.hpp>
 
 //third party
 #include <../glad/include/glad/glad.h>
@@ -63,6 +64,25 @@ const std::string theGreatSunFragPath = "shaders/theGreatSun.frag";
 char customFragShaderPath[256] = "shaders/theGreatSun.frag";
 bool didShaderChange = false;
 
+
+void PreDraw(ShaderProgram program, float shaderTime, Vec2int u_resolution){
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+
+	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	program.Use();
+	program.SetUniformTime(shaderTime);
+	program.SetUniformResolution(u_resolution);
+}
+
+
+float deltaTime = 0;
+float frameTimeDeltaMiliS = 0;
+float framerate = 0;
+
 void ImGuiProfilerFrame(float deltaTime, float framerate){
 	ImGui::StyleColorsDark();
 	ImGui::Begin("Profiler");
@@ -83,33 +103,12 @@ void ImGuiShaderInputFrame(){
 		strcpy(customFragShaderPath, inputFragmentShaderPath);
 		didShaderChange = true;
 	}
+	if(ImGui::Button("reset time")){
+		deltaTime = 0;
+	}
 	ImGui::End();
 }
 
-void PreDraw(ShaderProgram program, float shaderTime, Vec2int u_resolution){
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-
-	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	program.Use();
-	program.SetUniformTime(shaderTime);
-	program.SetUniformResolution(u_resolution);
-}
-
-void Draw(GLuint vertexArrayObject, const GLuint vertexBufferObject){
-	glBindVertexArray(vertexArrayObject);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-
-	// glDrawArrays(GL_TRIANGLES, 0, 6);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
-
-float deltaTime = 0;
-float frameTimeDeltaMiliS = 0;
-float framerate = 0;
 int main(int argc, char* argv[]){
 	if(SDL_Init(SDL_INIT_EVERYTHING)){
 		std::cout << "SDL_INIT failed with error: " << SDL_GetError() << std::endl;
@@ -152,6 +151,7 @@ int main(int argc, char* argv[]){
 	while(running){
 		Uint64 frameStartTimePC = SDL_GetPerformanceCounter();
 		SDL_GetWindowSizeInPixels(window1, &SCREEN_WIDTH, &SCREEN_HEIGHT);
+		program1.SetUniformResolution(Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT));
 		//read keyboard input
 		while(SDL_PollEvent(&event)){
 			ImGui_ImplSDL2_ProcessEvent(&event);
@@ -163,6 +163,10 @@ int main(int argc, char* argv[]){
 				return 0;
 			}
 			else if(event.type == SDL_KEYDOWN){
+				//these have to be here outside the cases, because c++ throws error: "jump to case label" and note: "crosses initialization of 'bool isBordered'" for bools
+				Uint32 window1Flags = SDL_GetWindowFlags(window1);
+				bool isBordered = window1Flags & SDL_WINDOW_BORDERLESS;
+				bool isAlwaysOnTop = window1Flags & SDL_WINDOW_ALWAYS_ON_TOP;
 				switch(event.key.keysym.sym){
 					case SDLK_w:
 						break;
@@ -173,12 +177,18 @@ int main(int argc, char* argv[]){
 					case SDLK_d:
 						break;
 					case SDLK_c:
-						SCREEN_WIDTH = SCREEN_HEIGHT;
+						(SCREEN_WIDTH > SCREEN_HEIGHT) ? SCREEN_HEIGHT = SCREEN_WIDTH : SCREEN_WIDTH = SCREEN_HEIGHT;
 						SDL_SetWindowSize(window1, SCREEN_WIDTH, SCREEN_HEIGHT);
 						break;
 					case SDLK_b:
-						bool isBordered = SDL_GetWindowFlags(window1) & SDL_WINDOW_BORDERLESS; 
 						SDL_SetWindowBordered(window1, isBordered ? SDL_TRUE : SDL_FALSE);
+						break;
+					case SDLK_t:
+						SDL_SetWindowAlwaysOnTop(window1, isAlwaysOnTop ? SDL_FALSE : SDL_TRUE);
+						SDL_SetWindowAlwaysOnTop(profileWindow, isAlwaysOnTop ? SDL_FALSE : SDL_TRUE);
+						break;
+					case SDLK_x:
+						SDL_SetWindowPosition(window1, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 						break;
 				}
 			}
@@ -197,48 +207,35 @@ int main(int argc, char* argv[]){
 		//specify a triangle
 		const std::vector<GLfloat> vertexData{
 		   //x,  y,  z
-		   //R,  G,  B
 			-1, -1,  0,	//vert 1 bottomLeft
-			 1,  0,  0,
 			 1, -1,  0,	//vert 2 bottomRight
-			 0,  1,  0,
 			-1,  1,  0,	//vert 3 topLeft
-			 0,  0,  1,
 			 1,  1,  0,	//vert 4 topRight
-			 1,  0,  0
 		};
 		const std::vector<GLuint> indexData{
 			0, 1, 2,
 			2, 1, 3
 		};
 
-
 		GLuint vao1 = 0;
-		GLuint vbo1 = 0;
-		GLuint ibo1 = 0;
 		glGenVertexArrays(1, &vao1);																					//generate 1 vao1, and store it in vao1
 		glBindVertexArray(vao1);																						//bind vao1, essentially select it to do something...
-		glGenBuffers(1, &vbo1);																							//generate 1 buffer, and store it in vbo1
-		glBindBuffer(GL_ARRAY_BUFFER, vbo1);																			//bind vbo1, essentially select it to do something...
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * vertexData.size(), vertexData.data(), GL_STATIC_DRAW);			//copy data to vbo1 (populate vbo1)
-
-		glGenBuffers(1, &ibo1);																							//generate 1 buffer, and store it in ibo1
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo1);																	//bind ibo1, essentially select it to do something...
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER,indexData.size() * sizeof(GLuint), indexData.data(), GL_STATIC_DRAW);		//copy data to ibo1 (populate ibo1)
+		
+		VertexBuffer vertexBuffer1{vertexData.data(), sizeof(GLfloat) * vertexData.size()};								//create a vertex buffer object with vertexData
+		IndexBuffer indexBuffer1{indexData.data(), 6};																	//create an index buffer object with indexData
 
 		glEnableVertexAttribArray(0);																					//enable vertex attribute array 0 which is the position attribute
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GL_FLOAT), (GLvoid*)0);								//0 for position attribute, 3 for number of components, GL_FLOAT for data type, GL_FALSE for normalized, 6 for stride, 0 for offset
-		glEnableVertexAttribArray(1);																					//enable vertex attribute array 1 which is the color attribute
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GL_FLOAT), (GLvoid*)(3 * sizeof(GL_FLOAT)));			//1 for color attribute,    3 for number of components, GL_FLOAT for data type, GL_FALSE for normalized, 6 for stride, 3 for offset
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (GLvoid*)0);								//0 for position attribute, 3 for number of components, GL_FLOAT for data type, GL_FALSE for normalized, 3 for stride, 0 for offset
 
 		//unbind vao1 and disable open attrib arrays
 		glBindVertexArray(0);
 		
 		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
 
 		PreDraw(program1, deltaTime, Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT));
-		Draw(vao1, vbo1);
+		glBindVertexArray(vao1);
+		indexBuffer1.Bind();
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
 		SDL_SetRenderDrawColor(profileRenderer, 0, 0, 0, 1);
 		SDL_RenderClear(profileRenderer);
