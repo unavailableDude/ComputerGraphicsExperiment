@@ -248,6 +248,7 @@ int main(int argc, char* argv[]){
 
 	Vec2int currShapeSize(64, 64);
 	std::vector<Circle> strokes;
+	Rectangle rectangle1{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 50, 50};
 	int mouseX = SCREEN_WIDTH / 2, mouseY = SCREEN_HEIGHT / 2;
 	while(running){
 		Uint64 frameStartTimePC = SDL_GetPerformanceCounter();
@@ -261,12 +262,16 @@ int main(int argc, char* argv[]){
 			else if(event.type == SDL_KEYDOWN){
 				switch(event.key.keysym.sym){
 					case SDLK_w:
+						rectangle1.MovePos(0, -1);
 						break;
 					case SDLK_s:
+						rectangle1.MovePos(0, 1);
 						break;  
 					case SDLK_a:
+						rectangle1.MovePos(-1, 0);
 						break;
 					case SDLK_d:
+						rectangle1.MovePos(1, 0);
 						break;
 				}
 			}
@@ -291,6 +296,7 @@ int main(int argc, char* argv[]){
 
 		DrawHW1(renderer1, 50, 50);
 		LineRect(renderer1, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 100, 100);
+		rectangle1.Display(renderer1);
 
 		SDL_RenderPresent(renderer1);
 

@@ -19,9 +19,9 @@ void Rectangle::SetPos(int x, int y){
 	ICoordable::SetPos(x, y);
 	Center();
 }
+
 void Rectangle::MovePos(int dx, int dy){
 	ICoordable::MovePos(dx, dy);
-	Center();
 }
 
 void Rectangle::SetSize(int w, int h){
@@ -29,6 +29,7 @@ void Rectangle::SetSize(int w, int h){
 	size.y = h;
 	Center();
 }
+
 void Rectangle::ChangeSize(int dw, int dh){
 	size.x += dw;
 	size.y += dh;
