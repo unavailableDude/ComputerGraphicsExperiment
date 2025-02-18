@@ -20,6 +20,9 @@
 //third party
 #include <../glad/include/glad/glad.h>
 
+#include <../glm/glm.hpp>
+#include <../glm/gtc/matrix_transform.hpp>
+
 #include <../include/imgui/imgui.h>
 #include <../include/imgui/imgui_impl_sdl2.h>
 #include <../include/imgui/imgui_impl_sdlrenderer2.h>
@@ -56,16 +59,20 @@ void Cleanup(){
 	ImGui::DestroyContext();
 }
 
-//shader filenames const
+//shader filepaths
 const std::string vertShader1Path = "shaders/vertShader1.vert";
+const std::string vertShader2Path = "shaders/vertShader2.vert";
+
 const std::string fragShader1Path = "shaders/fragShader1.frag";
 const std::string psyShaderFragPath = "shaders/psyShader.frag";
 const std::string theGreatSunFragPath = "shaders/theGreatSun.frag";
+
 char customFragShaderPath[256] = "shaders/theGreatSun.frag";
+char customVertShaderPath[256] = "shaders/vertShader1.vert";
 bool didShaderChange = false;
 
 
-void PreDraw(ShaderProgram program, float shaderTime, Vec2int u_resolution){
+void PreDraw(ShaderProgram program, float shaderTime, Vec2int u_resolution, glm::mat4& mvp){
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
@@ -76,6 +83,7 @@ void PreDraw(ShaderProgram program, float shaderTime, Vec2int u_resolution){
 	program.Use();
 	program.SetUniformTime(shaderTime);
 	program.SetUniformResolution(u_resolution);
+	program.SetUniformMVP(mvp[0][0]);
 }
 
 
@@ -94,13 +102,18 @@ void ImGuiProfilerFrame(float deltaTime, float framerate){
 
 void ImGuiShaderInputFrame(){
 	ImGui::Begin("Shader Editor");
-	ImGui::Text("path to fragment shader:");
+	ImGui::Text("paths to shaders:");
 	static char inputFragmentShaderPath[256] = "shaders\\theGreatSun.frag";
-	ImGui::InputText("##path", inputFragmentShaderPath, 256);
-	ImGui::Text("Current fragment shader path:");
+	ImGui::InputText("##path1", inputFragmentShaderPath, 256);
+	static char inputVertexShaderPath[256] =   "shaders\\vertShader1.vert";
+	ImGui::InputText("##path2", inputVertexShaderPath, 256);
+	ImGui::Text("Current shaders:");
 	ImGui::Text(customFragShaderPath);
+	ImGui::Text(customVertShaderPath);
+	
 	if(ImGui::Button("Load Shader")){
 		strcpy(customFragShaderPath, inputFragmentShaderPath);
+		strcpy(customVertShaderPath, inputVertexShaderPath);
 		didShaderChange = true;
 	}
 	if(ImGui::Button("reset time")){
@@ -134,7 +147,9 @@ int main(int argc, char* argv[]){
 
 	OGLSetup();
 
-	ShaderProgram program1{vertShader1Path, customFragShaderPath, Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT)};
+	ShaderProgram program1{customVertShaderPath, customFragShaderPath, Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT)};
+	glm::mat4 projMat = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, -10.0f, 10.0f);
+	program1.SetUniformMVP(projMat);
 	program1.LogInfo();
 
 	//init imgui
@@ -199,18 +214,19 @@ int main(int argc, char* argv[]){
 		mouseY /= SCREEN_SCALE;
 
 		if(didShaderChange){
-			program1.ReloadShader(vertShader1Path, customFragShaderPath);
+			program1.ReloadShader(customVertShaderPath, customFragShaderPath);
+			program1.SetUniformMVP(projMat);
 			program1.LogInfo();
 			didShaderChange = false;
 		}
 
 		//specify a triangle
 		const std::vector<GLfloat> vertexData{
-		   //x,  y,  z
-			-1, -1,  0,	//vert 1 bottomLeft
-			 1, -1,  0,	//vert 2 bottomRight
-			-1,  1,  0,	//vert 3 topLeft
-			 1,  1,  0,	//vert 4 topRight
+		   //x, y, z, w
+			-1, -1,  0,  0,	//vert 1 bottomLeft
+			 1, -1,  1,  0,	//vert 2 bottomRight
+			-1,  1,  0,  1,	//vert 3 topLeft
+			 1,  1,  1,  1,	//vert 4 topRight
 		};
 		const std::vector<GLuint> indexData{
 			0, 1, 2,
@@ -225,14 +241,14 @@ int main(int argc, char* argv[]){
 		IndexBuffer indexBuffer1{indexData.data(), 6};																	//create an index buffer object with indexData
 
 		glEnableVertexAttribArray(0);																					//enable vertex attribute array 0 which is the position attribute
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (GLvoid*)0);								//0 for position attribute, 3 for number of components, GL_FLOAT for data type, GL_FALSE for normalized, 3 for stride, 0 for offset
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (GLvoid*)0);								//0 for position attribute, 3 for number of components, GL_FLOAT for data type, GL_FALSE for normalized, 3 for stride, 0 for offset
 
 		//unbind vao1 and disable open attrib arrays
 		glBindVertexArray(0);
 		
 		glDisableVertexAttribArray(0);
 
-		PreDraw(program1, deltaTime, Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT));
+		PreDraw(program1, deltaTime, Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT), projMat);
 		glBindVertexArray(vao1);
 		indexBuffer1.Bind();
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
