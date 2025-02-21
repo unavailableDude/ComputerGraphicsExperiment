@@ -1,7 +1,7 @@
 /*
 	WARNING! the code you see here may cause you to have eye cancer
 	!YOU HAVE BEEN WARNED!
-	todo: refactor this code.
+	todo: abstract vertex arrays, to link to a buffer, and a layout
 */
 //#define PROFILING
 
@@ -16,6 +16,7 @@
 #include <../include/ShaderProgram.hpp>
 #include <../include/VertexBuffer.hpp>
 #include <../include/IndexBuffer.hpp>
+#include <../include/VertexArray.hpp>
 
 //third party
 #include <../glad/include/glad/glad.h>
@@ -148,7 +149,7 @@ int main(int argc, char* argv[]){
 	OGLSetup();
 
 	ShaderProgram program1{customVertShaderPath, customFragShaderPath, Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT)};
-	glm::mat4 projMat = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, -10.0f, 10.0f);
+	glm::mat4 projMat = glm::perspective(45.0f, 1.77f, 0.1f, 100.0f);
 	program1.SetUniformMVP(projMat);
 	program1.LogInfo();
 
@@ -162,6 +163,34 @@ int main(int argc, char* argv[]){
 	SDL_Event event;
 	bool running = true;
 	int mouseX = SCREEN_WIDTH / 2, mouseY = SCREEN_HEIGHT / 2;
+
+	//specify a triangle
+	const std::vector<GLfloat> vertexData{
+		//x, y, z, w
+		//R, G, B, A
+		 -1, -1,  0,  0,	//vert 1 bottomLeft
+		  1,  0,  0,  1,
+		  1, -1,  1,  0,	//vert 2 bottomRight
+		  0,  1,  0,  1,
+		 -1,  1,  0,  0,	//vert 3 topLeft
+		  0,  0,  1,  1,
+		  1,  1,  1,  0,	//vert 4 topRight
+		  1,  1,  1,  1,
+	 };
+	 const std::vector<GLuint> indexData{
+		 0, 1, 2,
+		 2, 1, 3
+	 };
+
+	VertexBuffer vertexBuffer1{vertexData.data(), sizeof(GLfloat) * vertexData.size()};
+	IndexBuffer indexBuffer1{indexData.data(), 6};
+
+	VertexArray va;
+	VertexBufferLayout layout;
+	layout.Push<float>(4);		//push 4 floats for position
+	layout.Push<float>(4);		//push 4 floats for color
+	va.AddBuffer(vertexBuffer1, layout);
+
 
 	while(running){
 		Uint64 frameStartTimePC = SDL_GetPerformanceCounter();
@@ -220,36 +249,8 @@ int main(int argc, char* argv[]){
 			didShaderChange = false;
 		}
 
-		//specify a triangle
-		const std::vector<GLfloat> vertexData{
-		   //x, y, z, w
-			-1, -1,  0,  0,	//vert 1 bottomLeft
-			 1, -1,  1,  0,	//vert 2 bottomRight
-			-1,  1,  0,  1,	//vert 3 topLeft
-			 1,  1,  1,  1,	//vert 4 topRight
-		};
-		const std::vector<GLuint> indexData{
-			0, 1, 2,
-			2, 1, 3
-		};
-
-		GLuint vao1 = 0;
-		glGenVertexArrays(1, &vao1);																					//generate 1 vao1, and store it in vao1
-		glBindVertexArray(vao1);																						//bind vao1, essentially select it to do something...
-		
-		VertexBuffer vertexBuffer1{vertexData.data(), sizeof(GLfloat) * vertexData.size()};								//create a vertex buffer object with vertexData
-		IndexBuffer indexBuffer1{indexData.data(), 6};																	//create an index buffer object with indexData
-
-		glEnableVertexAttribArray(0);																					//enable vertex attribute array 0 which is the position attribute
-		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GL_FLOAT), (GLvoid*)0);								//0 for position attribute, 3 for number of components, GL_FLOAT for data type, GL_FALSE for normalized, 3 for stride, 0 for offset
-
-		//unbind vao1 and disable open attrib arrays
-		glBindVertexArray(0);
-		
-		glDisableVertexAttribArray(0);
-
 		PreDraw(program1, deltaTime, Vec2int(SCREEN_WIDTH, SCREEN_HEIGHT), projMat);
-		glBindVertexArray(vao1);
+		va.Bind();
 		indexBuffer1.Bind();
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
