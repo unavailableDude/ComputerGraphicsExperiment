@@ -1,7 +1,5 @@
 # ComputerGraphicsExperiment
 
-this project uses SDL2 to draw shapes on a window,
+this project implements the drawing methods learnt from CG classes.
 
-you can draw a circle and a square,
-
-and alternate between them at runtime using the 'a' and 'd' keys.
+the GLAD-Thing branch plays with openGL.
